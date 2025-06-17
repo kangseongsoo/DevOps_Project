@@ -71,9 +71,9 @@ docker compose logs -f chatbot
 ## 🔗 API 엔드포인트
 
 ### 직접 접근 (개발용)
-- **챗봇 API**: http://localhost:8000
-- **API 문서**: http://localhost:8000/docs
-- **헬스체크**: http://localhost:8000/health
+- **챗봇 API**: http://localhost:7000
+- **API 문서**: http://localhost:7000/docs
+- **헬스체크**: http://localhost:7000/health
 
 ### Nginx를 통한 접근 (운영용)
 - **API**: http://localhost/api/
