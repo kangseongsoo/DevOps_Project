@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  chatbot:
+  backend:
     build:
       context: ./services/chatbot
       dockerfile: Dockerfile
@@ -10,8 +8,14 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - MARIADB_HOST=mariadb
+      - MARIADB_PORT=3306
+      - MARIADB_DATABASE=chatbot_db
+      - MARIADB_USER=chatbot_user
+      - MARIADB_PASSWORD=chatbot_password
     depends_on:
       - redis
+      - mariadb
 
   redis:
     image: redis:7.2
@@ -23,5 +27,52 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     restart: always
 
+  mariadb:
+    image: mariadb:10.11
+    container_name: mariadb_server
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=chatbot_db
+      - MYSQL_USER=chatbot_user
+      - MYSQL_PASSWORD=chatbot_password
+    volumes:
+      - ./services/mariadb/data:/var/lib/mysql
+      - ./services/mariadb/init:/docker-entrypoint-initdb.d
+    restart: always
+
+  frontend:
+    build:
+      context: ./services/frontend
+      dockerfile: Dockerfile
+    container_name: frontend_app
+    ports:
+      - "3001:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_HOST=0.0.0.0
+      - WDS_SOCKET_PORT=3001
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_server
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./services/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./services/nginx/sites-enabled:/etc/nginx/sites-enabled
+      - ./services/nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+
 volumes:
   redis_data:
+  mariadb_data:

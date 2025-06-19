@@ -1,7 +1,61 @@
 import json
+import aiomysql
 from typing import List, Dict, Any, Optional
 import redis
 from config import settings
+
+class MariaDBManager:
+    def __init__(self):
+        self.pool = None
+    
+    async def connect(self):
+        """MariaDB 연결 풀 생성"""
+        try:
+            self.pool = await aiomysql.create_pool(
+                host=settings.MARIADB_HOST,
+                port=settings.MARIADB_PORT,
+                user=settings.MARIADB_USER,
+                password=settings.MARIADB_PASSWORD,
+                db=settings.MARIADB_DATABASE,
+                charset='utf8mb4',
+                autocommit=True,
+                minsize=1,
+                maxsize=10
+            )
+            print("MariaDB 연결 성공!")
+        except Exception as e:
+            print(f"MariaDB 연결 실패: {e}")
+            self.pool = None
+    
+    async def close(self):
+        """연결 풀 종료"""
+        if self.pool:
+            self.pool.close()
+            await self.pool.wait_closed()
+    
+    def is_connected(self) -> bool:
+        """MariaDB 연결 상태 확인"""
+        return self.pool is not None
+    
+    async def execute_query(self, query: str, params: tuple = None):
+        """쿼리 실행"""
+        if not self.pool:
+            return None
+        
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(query, params)
+                return await cursor.fetchall()
+    
+    async def execute_insert(self, query: str, params: tuple = None):
+        """INSERT 쿼리 실행 후 ID 반환"""
+        if not self.pool:
+            return None
+        
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(query, params)
+                return cursor.lastrowid
 
 class RedisManager:
     def __init__(self):
@@ -84,5 +138,6 @@ class RedisManager:
             print(f"Redis 삭제 오류: {e}")
             return False
 
-# Redis 매니저 인스턴스
-redis_manager = RedisManager() 
+# 데이터베이스 매니저 인스턴스
+redis_manager = RedisManager()
+mariadb_manager = MariaDBManager() 

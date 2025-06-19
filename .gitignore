@@ -42,6 +42,35 @@ logs/
 
 # Docker
 .docker/
+docker-compose.override.yml
+.dockerignore
+
+# Docker 컨테이너 데이터 파일들
+services/*/data/
+**/data/
+volumes/
+
+# Docker 컨테이너 로그
+containers/
+docker-logs/
+
+# Docker 빌드 캐시
+.docker-build-cache/
+
+# Docker 볼륨 마운트 파일들
+*.rdb
+dump.rdb
+*.sql
+*.db
+*.sqlite
+*.sqlite3
+
+# 데이터베이스 관련 Docker 파일들
+mysql/
+mariadb/
+postgres/
+redis/
+mongodb/
 
 # Operating System
 .DS_Store
@@ -52,10 +81,6 @@ Thumbs.db
 htmlcov/
 .pytest_cache/
 .tox/
-
-# Redis
-*.rdb
-dump.rdb
 
 # Misc
 *.bak
